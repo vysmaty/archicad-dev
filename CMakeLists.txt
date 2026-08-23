@@ -29,6 +29,15 @@ set(AddOnSourcesFolder src)
 set(AddOnResourcesFolder .)
 set(PCH_HEADER "src/ArchicadDevPrecompiledHeader.hpp")
 
+# The Graphisoft resource compiler requires a non-empty positional path even
+# when this Add-On has no library parts. Callers can override it for ACLib use.
+set(
+    LP_XML_CONVERTER_FOLDER
+    "${AC_API_DEVKIT_DIR}/LP_XMLConverter"
+    CACHE PATH
+    "Optional Graphisoft LP_XMLConverter directory"
+)
+
 GenerateAddOnProject(
     ArchicadDevAddOn
     ${AC_VERSION}

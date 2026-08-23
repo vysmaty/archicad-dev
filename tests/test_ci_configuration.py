@@ -10,6 +10,12 @@ def test_cpp_build_uses_visual_studio_2022_runner() -> None:
     assert "runs-on: windows-latest" not in workflow
 
 
+def test_resource_compiler_receives_a_non_empty_lp_xml_path() -> None:
+    cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+
+    assert '"${AC_API_DEVKIT_DIR}/LP_XMLConverter"' in cmake
+
+
 def test_ci_runs_python_quality_and_all_six_cpp_builds() -> None:
     workflow = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
 

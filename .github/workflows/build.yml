@@ -9,10 +9,10 @@ jobs:
     name: Python quality and repository contracts
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v10
       - name: Synchronize locked environment
         run: uv sync --all-groups --locked
       - name: Ruff formatting and lint
@@ -46,10 +46,10 @@ jobs:
           - version: 29
             configuration: Release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v10
       - name: Report Visual Studio toolchains
         shell: pwsh
         run: |
