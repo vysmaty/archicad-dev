@@ -15,6 +15,7 @@ def test_resource_compiler_receives_a_non_empty_lp_xml_path() -> None:
 
     assert '"${AC_API_DEVKIT_DIR}/LP_XMLConverter"' in cmake
     assert (ROOT / "RFIX.win" / "AddOnMain.rc2").is_file()
+    assert (ROOT / "src" / "APIEnvir.h").is_file()
 
 
 def test_ci_runs_python_quality_and_all_six_cpp_builds() -> None:
