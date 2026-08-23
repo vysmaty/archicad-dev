@@ -1,0 +1,37 @@
+project:
+  name: archicad-dev-addon
+  platform: windows-x64
+  minimum_archicad: 27
+
+devkits:
+  27:
+    release: "27.6003"
+    asset: API.Development.Kit.WIN.27.6003.zip
+    url: https://github.com/GRAPHISOFT/archicad-api-devkit/releases/download/27.6003/API.Development.Kit.WIN.27.6003.zip
+    cmake_toolset: v142
+  28:
+    release: "28.4001"
+    asset: API.Development.Kit.WIN.28.4001.zip
+    url: https://github.com/GRAPHISOFT/archicad-api-devkit/releases/download/28.4001/API.Development.Kit.WIN.28.4001.zip
+    cmake_toolset: v142
+  29:
+    release: "29.3100"
+    asset: API.Development.Kit.WIN.29.3100.zip
+    url: https://github.com/GRAPHISOFT/archicad-api-devkit/releases/download/29.3100/API.Development.Kit.WIN.29.3100.zip
+    cmake_toolset: v143
+
+upstreams:
+  graphisoft_addon_cmake:
+    url: https://github.com/GRAPHISOFT/archicad-addon-cmake
+    purpose: Upstream reference template; not merged automatically.
+  graphisoft_cmake_tools:
+    url: https://github.com/GRAPHISOFT/archicad-addon-cmake-tools
+    path: external/archicad-addon-cmake-tools
+    pinned_commit: "7a6f8aa174ea1651f3a15c9f704be6c051a5061f"
+    update: git submodule update --remote external/archicad-addon-cmake-tools
+  graphisoft_api_devkit:
+    url: https://github.com/GRAPHISOFT/archicad-api-devkit
+    releases: https://github.com/GRAPHISOFT/archicad-api-devkit/releases
+  tapir:
+    url: https://github.com/ENZYME-APD/tapir-archicad-automation
+    purpose: Multi-version Add-On and CI reference.

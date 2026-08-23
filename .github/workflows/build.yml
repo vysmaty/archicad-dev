@@ -1,0 +1,42 @@
+name: Archicad Add-On build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: AC${{ matrix.version }} ${{ matrix.configuration }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: 27
+            configuration: Debug
+          - version: 27
+            configuration: Release
+          - version: 28
+            configuration: Debug
+          - version: 28
+            configuration: Release
+          - version: 29
+            configuration: Debug
+          - version: 29
+            configuration: Release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v5
+      - name: Download pinned DevKit
+        shell: pwsh
+        run: .\tools\bootstrap.ps1 -Version ${{ matrix.version }}
+      - name: Configure and build
+        shell: pwsh
+        run: .\tools\build.ps1 -Version ${{ matrix.version }} -Configuration ${{ matrix.configuration }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ArchicadDevAddOn-AC${{ matrix.version }}-${{ matrix.configuration }}
+          path: build/**/ArchicadDevAddOn.apx
+          if-no-files-found: error

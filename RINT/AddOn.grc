@@ -1,0 +1,15 @@
+#include "ResourceIds.hpp"
+
+'STR#' ID_ADDON_INFO "Add-On name and description" {
+/* [1] */ "Archicad Dev Add-On"
+/* [2] */ "Minimal multi-version Archicad 27+ development Add-On"
+}
+
+'STR#' ID_ADDON_MENU "Menu command" {
+/* [1] */ "Archicad Dev Add-On..."
+}
+
+'MDID' 32500 "Add-On Identifier" {
+    1 /* Replace with a Graphisoft-issued developer ID for distribution. */
+    1 /* Replace with your local ID for distribution. */
+}

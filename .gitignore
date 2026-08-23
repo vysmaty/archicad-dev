@@ -1,0 +1,27 @@
+# Build and IDE output
+/build/
+/.vs/
+/.idea/
+/.vscode/
+*.suo
+*.user
+*.VC.db
+
+# Downloaded SDKs and local build configuration. Never commit DevKits.
+/third_party/devkits/
+/archicad-dev.local.json
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+
+# Packaged binaries
+*.apx
+*.bundle/
+*.pdb
+
+# Local working area
+/work/

@@ -1,0 +1,11 @@
+{
+  "addOnName": "ArchicadDevAddOn",
+  "defaultLanguage": "INT",
+  "languages": ["INT"],
+  "version": "0.1.0",
+  "copyright": {
+    "name": "Your Company",
+    "year": "2026"
+  },
+  "description": "Windows-first Archicad 27+ development Add-On"
+}

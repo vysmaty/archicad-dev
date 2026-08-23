@@ -1,0 +1,10 @@
+[project]
+name = "archicad-dev-addon"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.4",
+]
