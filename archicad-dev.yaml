@@ -1,7 +1,35 @@
 project:
-  name: archicad-dev-addon
+  name: archicad-dev
   platform: windows-x64
   minimum_archicad: 27
+  supported_archicad: [27, 28, 29]
+
+apis:
+  preference: [official_python, tapir, cpp]
+  official_python:
+    package: archicad
+    release: "29.3000"
+  tapir:
+    namespace: TapirCommand
+    release: "1.5.8"
+    optional: true
+    assets:
+      27:
+        name: TapirAddOn_AC27_Win.apx
+        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.5.8/TapirAddOn_AC27_Win.apx
+        sha256: 3df0289b62db928f1352a36ad8e9dbeed1a8585678d27316330a2bbd4e56ba93
+      28:
+        name: TapirAddOn_AC28_Win.apx
+        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.5.8/TapirAddOn_AC28_Win.apx
+        sha256: 132ff412583e1d5e3bea6151813ab607d3d92d5f1f24461dc7c3aad79e0171de
+      29:
+        name: TapirAddOn_AC29_Win.apx
+        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.5.8/TapirAddOn_AC29_Win.apx
+        sha256: 54785d3e04043990223a42ba58da8b54025dfb424be6668c8ddbd1b35b194206
+
+compatibility:
+  baseline: 27
+  allow_automatic_new_major: false
 
 devkits:
   27:
@@ -28,10 +56,9 @@ upstreams:
     url: https://github.com/GRAPHISOFT/archicad-addon-cmake-tools
     path: external/archicad-addon-cmake-tools
     pinned_commit: "7a6f8aa174ea1651f3a15c9f704be6c051a5061f"
-    update: git submodule update --remote external/archicad-addon-cmake-tools
   graphisoft_api_devkit:
     url: https://github.com/GRAPHISOFT/archicad-api-devkit
     releases: https://github.com/GRAPHISOFT/archicad-api-devkit/releases
   tapir:
     url: https://github.com/ENZYME-APD/tapir-archicad-automation
-    purpose: Multi-version Add-On and CI reference.
+    purpose: Optional Python command surface and multi-version CI reference.

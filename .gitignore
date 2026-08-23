@@ -9,6 +9,7 @@
 
 # Downloaded SDKs and local build configuration. Never commit DevKits.
 /third_party/devkits/
+/third_party/tapir/
 /archicad-dev.local.json
 
 # Python / uv
@@ -17,6 +18,10 @@ __pycache__/
 *.py[cod]
 .ruff_cache/
 .pytest_cache/
+/.coverage
+/htmlcov/
+/.uv-cache/
+/dist/
 
 # Packaged binaries
 *.apx

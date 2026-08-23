@@ -1,46 +1,72 @@
-# Archicad Add-On development guide
+# Agent guide for archicad-dev
 
-## Scope
+## Mission and scope
 
-This repository builds a Windows x64 Archicad C++ Add-On for **Archicad 27, 28, and 29**. Do not lower the compatibility floor without an explicit decision.
+Maintain a Windows x64 foundation for Archicad 27, 28, and 29. Treat `archicad-dev.yaml` as the source of truth. Never add another Archicad major, lower the compatibility floor, enable distribution, or change real MDIDs without an explicit reviewed decision.
 
-## Non-negotiable constraints
+## API selection rule
 
-- Keep `external/archicad-addon-cmake-tools` as the official Graphisoft CMake tooling submodule. Do not copy its files into this repository.
-- Do not commit anything beneath `third_party/devkits/`, build directories, `.apx` files, or local CMake presets.
-- A build targets exactly one Archicad major version. Do not link libraries or headers across versions.
-- Use `AC_VERSION` and `AC_API_DEVKIT_DIR` supplied by the selected CMake preset/wrapper. The DevKit path must end in `Support`.
-- Windows is the supported platform and all shipped artifacts are x64.
-- Toolset mapping is intentional: AC27/AC28 use `v142`; AC29 uses `v143`.
+Choose the narrowest sufficient layer in this order:
 
-## Working conventions
+1. Graphisoft official Python API for documented JSON commands.
+2. Tapir for a documented `TapirCommand` absent from the official surface.
+3. C++ Add-On code for native hooks, menus, performance-sensitive work, or missing JSON capabilities.
 
-- C++ follows the API patterns in `src/`; keep callbacks small and return Graphisoft error codes.
-- Resource identifiers live in `src/ResourceIds.hpp`; matching resource text lives in `RINT/AddOn.grc`.
-- Use `uv run tools/<script>.py`, never a manually activated virtual environment. Standalone Python tools must retain PEP 723 metadata.
-- Make version or upstream changes in `archicad-dev.yaml` first, then update documentation and CI if needed.
-- Do not use real MDIDs for example or local builds. Distribution requires IDs issued by Graphisoft.
+Do not silently fall back from one layer to another. If a task requires Tapir, call `Archicad.connect(require_tapir=True)` or raise a clear error. If a task changes the model, state the mutation and test on a disposable file first.
 
-## Validation
+## Evidence before code
 
-Before declaring a change ready, run the applicable checks:
+Resolve API details in this order:
+
+1. Headers and documentation in the exact pinned DevKit.
+2. Graphisoft's generated `archicad` Python modules for the connected version.
+3. Official Graphisoft template/examples.
+4. Tapir command documentation and examples when Tapir is selected.
+5. Existing repository code and tests.
+
+Never invent an API symbol, parameter, return shape, resource ID, or version guard. Cite the source in code comments only when the compatibility decision would otherwise be unclear.
+
+## C++ rules
+
+- A binary targets exactly one Archicad major and one matching DevKit.
+- Put version-sensitive calls in `src/compat/`; do not scatter version checks through features.
+- Keep entry points and callbacks small, return Graphisoft error codes, and keep resource IDs in `src/ResourceIds.hpp`.
+- AC27/28 use toolset `v142`; AC29 uses `v143`. Shared C++ must compile under the lowest supported standard.
+- Keep `AC_ADDON_FOR_DISTRIBUTION=OFF` for local and CI builds.
+
+## Python and script rules
+
+- Manage the project with `uv`; never edit dependency arrays or the lockfile by hand.
+- Reusable code belongs in `python/src/archicad_tools/` with public type hints and docstrings.
+- A standalone script must include PEP 723 metadata with exact dependency pins. Start from `python/templates/script_template.py`.
+- Prefer read-only examples. Put runnable examples in `python/examples/` and tests in `tests/`.
+- Keep official API and Tapir calls explicit. Avoid generic wrappers that hide generated Graphisoft types.
+
+## Dependencies and generated content
+
+- Do not commit DevKits, downloaded Tapir binaries, `.apx` files, build output, or local presets.
+- Keep `external/archicad-addon-cmake-tools` as a pinned submodule; do not copy or edit its contents for a local workaround.
+- Update only the supported majors through `tools/check_updates.py --apply`. A new major is a separate architectural decision.
+
+## Required validation
+
+After changes, run the relevant subset; before a push, run all of it:
 
 ```powershell
-uv run ruff check tools
-uv run ruff format --check tools
-uv run tools/devkit.py validate
+uv sync --all-groups --locked
+uv run ruff format --check .
+uv run ruff check .
+uv run ty check python/src tools tests python/examples python/templates
+uv run pytest --cov=archicad_tools --cov-report=term-missing --cov-fail-under=80
+uv build
 cmake --list-presets
 ```
 
-If a DevKit is installed, also build the requested version:
+Build every affected Archicad major. A shared C++ change requires AC27, AC28, and AC29 Debug and Release validation in CI.
 
-```powershell
-.\tools\build.ps1 -Version 29 -Configuration Release
-```
+## Primary references
 
-## Upstream references
-
-- [Graphisoft CMake template](https://github.com/GRAPHISOFT/archicad-addon-cmake)
-- [Graphisoft CMake tools](https://github.com/GRAPHISOFT/archicad-addon-cmake-tools)
-- [Graphisoft API DevKit releases](https://github.com/GRAPHISOFT/archicad-api-devkit/releases)
-- [Tapir automation](https://github.com/ENZYME-APD/tapir-archicad-automation)
+- https://github.com/GRAPHISOFT/archicad-addon-cmake
+- https://github.com/GRAPHISOFT/archicad-addon-cmake-tools
+- https://github.com/GRAPHISOFT/archicad-api-devkit
+- https://github.com/ENZYME-APD/tapir-archicad-automation

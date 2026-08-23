@@ -2,6 +2,7 @@
 
 #include "ResourceIds.hpp"
 #include "RS.hpp"
+#include "compat/ArchicadCompatibility.hpp"
 
 namespace {
 
@@ -29,20 +30,12 @@ API_AddonType CheckEnvironment(API_EnvirParams* envir)
 
 GSErrCode RegisterInterface()
 {
-#ifdef ServerMainVers_2700
-    return ACAPI_MenuItem_RegisterMenu(AddOnMenuID, 0, MenuCode_Tools, MenuFlag_Default);
-#else
-    return ACAPI_Register_Menu(AddOnMenuID, 0, MenuCode_Tools, MenuFlag_Default);
-#endif
+    return ACCompat::RegisterMenu(AddOnMenuID);
 }
 
 GSErrCode Initialize()
 {
-#ifdef ServerMainVers_2700
-    return ACAPI_MenuItem_InstallMenuHandler(AddOnMenuID, MenuCommandHandler);
-#else
-    return ACAPI_Install_MenuHandler(AddOnMenuID, MenuCommandHandler);
-#endif
+    return ACCompat::InstallMenuHandler(AddOnMenuID, MenuCommandHandler);
 }
 
 GSErrCode FreeData()

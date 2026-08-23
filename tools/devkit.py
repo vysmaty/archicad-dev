@@ -86,9 +86,7 @@ def install(version: str) -> int:
 
     support = find_support_directory(version)
     if not support:
-        raise RuntimeError(
-            f"No valid Support directory was found after extracting {archive}"
-        )
+        raise RuntimeError(f"No valid Support directory was found after extracting {archive}")
     print(f"Archicad {version} DevKit installed: {support}")
     return 0
 
@@ -96,14 +94,12 @@ def install(version: str) -> int:
 def validate() -> int:
     config = load_config()
     result = 0
-    for version, item in sorted(config["devkits"].items()):
+    for version, _item in sorted(config["devkits"].items()):
         try:
             checked = version_config(str(version))
             support = find_support_directory(str(version))
             installation = str(support) if support else "not installed"
-            print(
-                f"AC{version}: {checked['release']} ({checked['cmake_toolset']}); {installation}"
-            )
+            print(f"AC{version}: {checked['release']} ({checked['cmake_toolset']}); {installation}")
         except (RuntimeError, ValueError) as error:
             print(f"AC{version}: invalid metadata: {error}", file=sys.stderr)
             result = 1
@@ -113,17 +109,11 @@ def validate() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    install_parser = commands.add_parser(
-        "install", help="download and install a pinned DevKit"
-    )
+    install_parser = commands.add_parser("install", help="download and install a pinned DevKit")
     install_parser.add_argument("version", choices=("27", "28", "29"))
-    path_parser = commands.add_parser(
-        "path", help="print an installed DevKit Support directory"
-    )
+    path_parser = commands.add_parser("path", help="print an installed DevKit Support directory")
     path_parser.add_argument("version", choices=("27", "28", "29"))
-    commands.add_parser(
-        "validate", help="validate manifest and report installed DevKits"
-    )
+    commands.add_parser("validate", help="validate manifest and report installed DevKits")
     args = parser.parse_args()
 
     if args.command == "install":

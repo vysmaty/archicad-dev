@@ -5,9 +5,30 @@ on:
   pull_request:
 
 jobs:
+  python-quality:
+    name: Python quality and repository contracts
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v5
+      - name: Synchronize locked environment
+        run: uv sync --all-groups --locked
+      - name: Ruff formatting and lint
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+      - name: Type check
+        run: uv run ty check python/src tools tests python/examples python/templates
+      - name: Unit tests and coverage
+        run: uv run pytest --cov=archicad_tools --cov-report=term-missing --cov-fail-under=80
+      - name: Build Python package
+        run: uv build
+
   build:
     name: AC${{ matrix.version }} ${{ matrix.configuration }}
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +50,11 @@ jobs:
         with:
           submodules: recursive
       - uses: astral-sh/setup-uv@v5
+      - name: Report Visual Studio toolchains
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
       - name: Download pinned DevKit
         shell: pwsh
         run: .\tools\bootstrap.ps1 -Version ${{ matrix.version }}

@@ -2,17 +2,14 @@
 # requires-python = ">=3.11"
 # dependencies = ["pyyaml==6.0.2"]
 # ///
-"""Check pinned Graphisoft DevKits and CMake tooling against their upstreams.
-
-This script reports only. Updating a pin remains an explicit review decision.
-"""
+"""Report or apply reviewed upstream pin updates for supported Archicad majors."""
 
 from __future__ import annotations
 
+import argparse
 import json
+import re
 import subprocess
-import sys
-import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -20,62 +17,179 @@ from typing import Any
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "archicad-dev.yaml"
+DEVKIT_REPOSITORY = "GRAPHISOFT/archicad-api-devkit"
+TAPIR_REPOSITORY = "ENZYME-APD/tapir-archicad-automation"
+USER_AGENT = "archicad-dev"
 
 
-def manifest() -> dict[str, Any]:
-    with (ROOT / "archicad-dev.yaml").open(encoding="utf-8") as source:
+def load_manifest(path: Path = MANIFEST) -> dict[str, Any]:
+    """Load the repository's version manifest."""
+    with path.open(encoding="utf-8") as source:
         return yaml.safe_load(source)
 
 
-def github_release(tag: str) -> dict[str, Any]:
+def github_json(endpoint: str) -> Any:
+    """Read JSON from GitHub's public API."""
     request = urllib.request.Request(
-        f"https://api.github.com/repos/GRAPHISOFT/archicad-api-devkit/releases/tags/{tag}",
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "archicad-dev-addon",
-        },
+        f"https://api.github.com/{endpoint}",
+        headers={"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT},
     )
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, timeout=30) as response:
         return json.load(response)
 
 
-def submodule_head(path: str) -> str:
-    result = subprocess.run(
-        ["git", "-C", str(ROOT / path), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
+def _release_key(tag: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in tag.split("."))
+
+
+def latest_release_for_major(releases: list[dict[str, Any]], major: int) -> dict[str, Any] | None:
+    """Select the newest stable release for one major with its Windows DevKit asset."""
+    candidates: list[dict[str, Any]] = []
+    tag_pattern = re.compile(rf"^{major}\.\d+(?:\.\d+)*$")
+    for release in releases:
+        tag = str(release.get("tag_name", ""))
+        if release.get("draft") or release.get("prerelease") or not tag_pattern.fullmatch(tag):
+            continue
+        expected_asset = f"API.Development.Kit.WIN.{tag}.zip"
+        assets = {asset.get("name") for asset in release.get("assets", [])}
+        if expected_asset in assets:
+            candidates.append(release)
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: _release_key(item["tag_name"]))
+
+
+def update_supported_devkits(config: dict[str, Any], releases: list[dict[str, Any]]) -> list[int]:
+    """Update only explicitly supported and already configured Archicad majors."""
+    changed: list[int] = []
+    supported = {int(version) for version in config["project"]["supported_archicad"]}
+    for version, item in sorted(config["devkits"].items()):
+        major = int(version)
+        if major not in supported:
+            continue
+        latest = latest_release_for_major(releases, major)
+        if latest is None or latest["tag_name"] == item["release"]:
+            continue
+        tag = latest["tag_name"]
+        asset = f"API.Development.Kit.WIN.{tag}.zip"
+        item.update(
+            release=tag,
+            asset=asset,
+            url=f"https://github.com/{DEVKIT_REPOSITORY}/releases/download/{tag}/{asset}",
+        )
+        changed.append(major)
+    return changed
+
+
+def latest_tapir_release() -> dict[str, Any]:
+    """Return Tapir's latest stable GitHub release payload."""
+    return github_json(f"repos/{TAPIR_REPOSITORY}/releases/latest")
+
+
+def _tapir_asset(release: dict[str, Any], version: int) -> dict[str, Any] | None:
+    expected = f"TapirAddOn_AC{version}_Win.apx"
+    return next(
+        (asset for asset in release.get("assets", []) if asset.get("name") == expected), None
     )
-    return result.stdout.strip()
+
+
+def update_tapir(config: dict[str, Any], release: dict[str, Any]) -> bool:
+    """Update Tapir only when every supported Windows asset has a SHA-256 digest."""
+    supported = [int(version) for version in config["project"]["supported_archicad"]]
+    selected = {version: _tapir_asset(release, version) for version in supported}
+    if any(
+        asset is None or not str(asset.get("digest", "")).startswith("sha256:")
+        for asset in selected.values()
+    ):
+        return False
+    tag = str(release["tag_name"]).lstrip("v")
+    tapir = config["apis"]["tapir"]
+    if tapir["release"] == tag:
+        return False
+    tapir["release"] = tag
+    for version, asset in selected.items():
+        assert asset is not None
+        tapir["assets"][version] = {
+            "name": asset["name"],
+            "url": asset["browser_download_url"],
+            "sha256": str(asset["digest"]).removeprefix("sha256:"),
+        }
+    return True
+
+
+def remote_head(url: str) -> str:
+    """Resolve an upstream repository's default-branch HEAD."""
+    result = subprocess.run(
+        ["git", "ls-remote", url, "HEAD"], check=True, capture_output=True, text=True
+    )
+    return result.stdout.split()[0]
+
+
+def update_cmake_tools(config: dict[str, Any], *, apply: bool) -> bool:
+    """Report and optionally advance the CMake tools submodule and manifest pin."""
+    tools = config["upstreams"]["graphisoft_cmake_tools"]
+    head = remote_head(tools["url"])
+    if head == tools["pinned_commit"]:
+        return False
+    if apply:
+        subprocess.run(
+            ["git", "submodule", "update", "--remote", tools["path"]], cwd=ROOT, check=True
+        )
+        tools["pinned_commit"] = subprocess.run(
+            ["git", "-C", str(ROOT / tools["path"]), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    return True
+
+
+def write_manifest(config: dict[str, Any], path: Path = MANIFEST) -> None:
+    """Persist the manifest with stable key ordering."""
+    path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+
+def check_updates(*, apply: bool = False) -> dict[str, Any]:
+    """Collect upstream differences and optionally update controlled pins."""
+    config = load_manifest()
+    releases = github_json(f"repos/{DEVKIT_REPOSITORY}/releases?per_page=100")
+    if apply:
+        devkits = update_supported_devkits(config, releases)
+    else:
+        devkits = [
+            int(version)
+            for version, item in config["devkits"].items()
+            if (latest := latest_release_for_major(releases, int(version))) is not None
+            and latest["tag_name"] != item["release"]
+        ]
+    tapir_release = latest_tapir_release()
+    if apply:
+        tapir_changed = update_tapir(config, tapir_release)
+    else:
+        tapir_changed = (
+            str(tapir_release["tag_name"]).lstrip("v") != config["apis"]["tapir"]["release"]
+        )
+    cmake_changed = update_cmake_tools(config, apply=apply)
+    if apply and (devkits or tapir_changed or cmake_changed):
+        write_manifest(config)
+    return {"devkits": devkits, "tapir": tapir_changed, "cmake_tools": cmake_changed}
 
 
 def main() -> int:
-    config = manifest()
-    result = 0
-    for version, item in sorted(config["devkits"].items()):
-        try:
-            release = github_release(item["release"])
-            assets = {asset["name"] for asset in release.get("assets", [])}
-            expected_asset = item["asset"]
-            available = expected_asset in assets
-            status = "available" if available else "MISSING ASSET"
-            print(f"AC{version}: {item['release']} — {status}")
-            result |= int(not available)
-        except (urllib.error.URLError, urllib.error.HTTPError) as error:
-            print(f"AC{version}: upstream check failed: {error}", file=sys.stderr)
-            result = 1
-
-    tools = config["upstreams"]["graphisoft_cmake_tools"]
-    try:
-        actual = submodule_head(tools["path"])
-        expected = tools["pinned_commit"]
-        status = "pinned" if actual == expected else f"DIFFERS ({actual})"
-        print(f"CMake tools: {status}")
-        result |= int(actual != expected)
-    except (OSError, subprocess.CalledProcessError) as error:
-        print(f"CMake tools: submodule check failed: {error}", file=sys.stderr)
-        result = 1
-    return result
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--apply", action="store_true", help="update controlled pins")
+    parser.add_argument("--json", action="store_true", help="emit machine-readable output")
+    args = parser.parse_args()
+    changes = check_updates(apply=args.apply)
+    if args.json:
+        print(json.dumps(changes, indent=2))
+    else:
+        action = "Updated" if args.apply else "Available"
+        print(f"{action} DevKits: {changes['devkits'] or 'none'}")
+        print(f"{action} Tapir: {'yes' if changes['tapir'] else 'no'}")
+        print(f"{action} CMake tools: {'yes' if changes['cmake_tools'] else 'no'}")
+    return 0
 
 
 if __name__ == "__main__":
