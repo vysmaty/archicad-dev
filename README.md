@@ -1,6 +1,6 @@
 # archicad-dev
 
-Windows-first development foundation for Archicad 27, 28, and 29. It combines a minimal multi-version C++ Add-On, Graphisoft's official CMake tooling, an `uv`-managed Python package, and optional Tapir commands without committing any API Development Kit or downloaded Add-On binary.
+C++ Add-On and Python automation foundation for Archicad, with optional Tapir support. It combines Graphisoft's official CMake tooling, an `uv`-managed Python package, and a minimal multi-version Add-On without committing any API Development Kit or downloaded Add-On binary.
 
 ## Included
 
@@ -80,3 +80,7 @@ This repository is independent rather than a fork. The template is a reference, 
 - [Tapir Archicad automation](https://github.com/ENZYME-APD/tapir-archicad-automation)
 
 Graphisoft DevKits remain subject to Graphisoft's licence. Tapir is optional and keeps its own licence.
+
+## License
+
+The original code and documentation in this repository are licensed under [Apache-2.0](LICENSE). Graphisoft DevKits, the CMake tools submodule, and optional Tapir downloads remain subject to their respective upstream terms; see [third-party notices](THIRD_PARTY_NOTICES.md).

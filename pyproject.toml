@@ -1,7 +1,7 @@
 [project]
 name = "archicad-dev-addon"
 version = "0.1.0"
-description = "Windows-first Archicad 27+ Add-On and automation foundation"
+description = "C++ Add-On and Python automation foundation for Archicad, with optional Tapir support"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
