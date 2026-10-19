@@ -2,52 +2,54 @@ project:
   name: archicad-dev
   platform: windows-x64
   minimum_archicad: 27
-  supported_archicad: [27, 28, 29]
-
+  supported_archicad:
+  - 27
+  - 28
+  - 29
 apis:
-  preference: [official_python, tapir, cpp]
+  preference:
+  - official_python
+  - tapir
+  - cpp
   official_python:
     package: archicad
-    release: "29.3000"
+    release: '29.3000'
   tapir:
     namespace: TapirCommand
-    release: "1.5.8"
+    release: 1.7.1
     optional: true
     assets:
       27:
         name: TapirAddOn_AC27_Win.apx
-        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.5.8/TapirAddOn_AC27_Win.apx
-        sha256: 3df0289b62db928f1352a36ad8e9dbeed1a8585678d27316330a2bbd4e56ba93
+        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.7.1/TapirAddOn_AC27_Win.apx
+        sha256: d4b62d711ce813f3973f6a0e7b01fa6ab0ec70eab8a13e5f8096224ab55ae752
       28:
         name: TapirAddOn_AC28_Win.apx
-        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.5.8/TapirAddOn_AC28_Win.apx
-        sha256: 132ff412583e1d5e3bea6151813ab607d3d92d5f1f24461dc7c3aad79e0171de
+        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.7.1/TapirAddOn_AC28_Win.apx
+        sha256: e9c1984a4de1aef95e0247b68e3ca713de60bddebe64e433e6d9faed0a6ae992
       29:
         name: TapirAddOn_AC29_Win.apx
-        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.5.8/TapirAddOn_AC29_Win.apx
-        sha256: 54785d3e04043990223a42ba58da8b54025dfb424be6668c8ddbd1b35b194206
-
+        url: https://github.com/ENZYME-APD/tapir-archicad-automation/releases/download/1.7.1/TapirAddOn_AC29_Win.apx
+        sha256: a3058c294655540686d2ccfb1bcc42a5e2cda130de6192a5847c1effca3f44c0
 compatibility:
   baseline: 27
   allow_automatic_new_major: false
-
 devkits:
   27:
-    release: "27.6003"
+    release: '27.6003'
     asset: API.Development.Kit.WIN.27.6003.zip
     url: https://github.com/GRAPHISOFT/archicad-api-devkit/releases/download/27.6003/API.Development.Kit.WIN.27.6003.zip
     cmake_toolset: v142
   28:
-    release: "28.4001"
+    release: '28.4001'
     asset: API.Development.Kit.WIN.28.4001.zip
     url: https://github.com/GRAPHISOFT/archicad-api-devkit/releases/download/28.4001/API.Development.Kit.WIN.28.4001.zip
     cmake_toolset: v142
   29:
-    release: "29.3100"
+    release: '29.3100'
     asset: API.Development.Kit.WIN.29.3100.zip
     url: https://github.com/GRAPHISOFT/archicad-api-devkit/releases/download/29.3100/API.Development.Kit.WIN.29.3100.zip
     cmake_toolset: v143
-
 upstreams:
   graphisoft_addon_cmake:
     url: https://github.com/GRAPHISOFT/archicad-addon-cmake
@@ -55,7 +57,7 @@ upstreams:
   graphisoft_cmake_tools:
     url: https://github.com/GRAPHISOFT/archicad-addon-cmake-tools
     path: external/archicad-addon-cmake-tools
-    pinned_commit: "7a6f8aa174ea1651f3a15c9f704be6c051a5061f"
+    pinned_commit: 542e0899f976237a594c7df9caf75041b6063e34
   graphisoft_api_devkit:
     url: https://github.com/GRAPHISOFT/archicad-api-devkit
     releases: https://github.com/GRAPHISOFT/archicad-api-devkit/releases
